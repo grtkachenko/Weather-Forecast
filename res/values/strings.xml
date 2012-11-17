@@ -1,0 +1,14 @@
+<resources>
+
+    <string name="app_name">Weather forecast</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_main">Weather Forecast</string>
+
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="grey">#808080</color>
+
+    <string name="title_activity_settings">SettingsActivity</string>
+
+</resources>
