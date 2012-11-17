@@ -1,6 +1,7 @@
 package ru.ifmo.rain.tkachenko.weather;
 
 import java.util.Calendar;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
@@ -10,6 +11,8 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
@@ -20,7 +23,9 @@ import android.widget.TextView;
 public class MainActivity extends Activity implements OnClickListener {
 	TextView city, temeratureNow, weatherNow;
 	ImageView refresh, settings;
-	private TableLayout table;
+	TableLayout table;
+	LinearLayout fourDaysLayout;
+	private WeatherAPIHelper weatherApiHelper = new WeatherAPIHelper();
 	private GestureDetector mGestureDetector;
 	private WeatherLayoutHelper[] today = new WeatherLayoutHelper[4];
 	private WeatherLayoutHelper[] fourDays = new WeatherLayoutHelper[4];
@@ -31,8 +36,12 @@ public class MainActivity extends Activity implements OnClickListener {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+		this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.activity_main);
-		WeatherAPIItem weather = WeatherAPIHelper.getHourWeather("Russia",
+
+		WeatherAPIItem weather = weatherApiHelper.getHourWeather("Russia",
 				"Saint_Petersburg", 2, 14);
 
 		mGestureDetector = new GestureDetector(this,
@@ -46,6 +55,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		refresh = (ImageView) findViewById(R.id.refresh);
 		settings = (ImageView) findViewById(R.id.settings);
 		table = (TableLayout) findViewById(R.id.table);
+		fourDaysLayout = (LinearLayout) findViewById(R.id.four_days_layout);
 		refresh.setClickable(true);
 		settings.setClickable(true);
 		refresh.setOnClickListener(this);
@@ -146,7 +156,7 @@ public class MainActivity extends Activity implements OnClickListener {
 				break;
 			}
 			Animation translate = AnimationUtils.loadAnimation(this,
-					R.anim.falling);
+					R.anim.falling_from_right);
 			table.startAnimation(translate);
 
 			fourDays[curDay].showTick(false);
