@@ -1,11 +1,12 @@
 package ru.ifmo.rain.tkachenko.weather;
 
+import ru.ifmo.rain.tkachenko.activities.MainActivity;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
-class MyGestureDetector extends GestureDetector.SimpleOnGestureListener {
+public class MyGestureDetector extends GestureDetector.SimpleOnGestureListener {
 	private static final int SWIPE_MIN_DISTANCE = 120;
 	private static final int SWIPE_MAX_OFF_PATH = 250;
 	private static final int SWIPE_THRESHOLD_VELOCITY = 200;

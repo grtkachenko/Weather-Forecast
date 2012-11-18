@@ -35,43 +35,43 @@ public class WeatherLayoutHelper {
 	}
 	
 
-	void setTimeFont(Typeface tf) {
+	public void setTimeFont(Typeface tf) {
 		time.setTypeface(tf);
 	}
 
-	void setTimeSize(float size) {
+	public void setTimeSize(float size) {
 		time.setTextSize(size);
 	}
 
-	void setTimeColor(int color) {
+	public void setTimeColor(int color) {
 		time.setTextColor(color);
 	}
 
-	void setTimeText(String text) {
+	public void setTimeText(String text) {
 		time.setText(text);
 	}
 
-	void setTemperatureColor(int color) {
+	public void setTemperatureColor(int color) {
 		temperature.setTextColor(color);
 	}
 
-	void setTemperatureFont(Typeface tf) {
+	public void setTemperatureFont(Typeface tf) {
 		temperature.setTypeface(tf);
 	}
 
-	void setTemperatureSize(float size) {
+	public void setTemperatureSize(float size) {
 		temperature.setTextSize(size);
 	}
 
-	void setTemperatureValue(int from, int to) {
+	public void setTemperatureValue(int from, int to) {
 		temperature.setText("" + from + "°/" + to + "°");
 	}
 	
-	void setWeatherImage(int resId) {
+	public void setWeatherImage(int resId) {
 		weather.setImageResource(resId);
 	}
 	
-	void showTick(boolean f) {
+	public void showTick(boolean f) {
 		if (f) {
 			tick.setVisibility(View.VISIBLE);
 		} else {
@@ -79,7 +79,7 @@ public class WeatherLayoutHelper {
 		}
 	}
 	
-	void setOnClickListener(OnClickListener o) {
+	public void setOnClickListener(OnClickListener o) {
 		layout.setOnClickListener(o);
 	}
 }

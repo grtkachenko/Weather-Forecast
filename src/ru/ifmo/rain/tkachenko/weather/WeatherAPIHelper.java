@@ -12,7 +12,7 @@ import org.json.JSONObject;
 
 import android.graphics.BitmapFactory;
 
-public class WeatherAPIHelper  {
+public class WeatherAPIHelper {
 	private static final String KEY = "34239673cd9dde87";
 	volatile private JSONObject json;
 	volatile private String link = "";
@@ -22,8 +22,26 @@ public class WeatherAPIHelper  {
 	}
 
 	public WeatherAPIItem getCurrentWeather(String country, String city) {
-		JSONObject json = getJSONByLink("http://api.wunderground.com/api/"
-				+ KEY + "/conditions/q/" + country + "/" + city + ".json");
+		link = "http://api.wunderground.com/api/" + KEY + "/conditions/q/"
+				+ country + "/" + city + ".json";
+
+		Thread thread = new Thread(new Runnable() {
+
+			public void run() {
+				// TODO Auto-generated method stub
+				json = getJSONByLink(link);
+			}
+		});
+		thread.start();
+		while (json == null) {
+			try {
+				Thread.sleep(16);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 		String temperatureString = "", weather = "";
 		try {
 			temperatureString = json.getJSONObject("current_observation")
@@ -45,7 +63,7 @@ public class WeatherAPIHelper  {
 		link = "http://api.wunderground.com/api/" + KEY + "/hourly10day/q/"
 				+ country + "/" + city + ".json";
 		Thread thread = new Thread(new Runnable() {
-			
+
 			public void run() {
 				// TODO Auto-generated method stub
 				json = getJSONByLink(link);
