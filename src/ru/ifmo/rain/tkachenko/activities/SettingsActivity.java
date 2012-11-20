@@ -1,47 +1,37 @@
 package ru.ifmo.rain.tkachenko.activities;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.TreeSet;
 
 import ru.ifmo.rain.tkachenko.weather.Cities;
 import ru.ifmo.rain.tkachenko.weather.CityDbAdapter;
 import ru.ifmo.rain.tkachenko.weather.R;
-import ru.ifmo.rain.tkachenko.weather.R.id;
-import ru.ifmo.rain.tkachenko.weather.R.layout;
-import ru.ifmo.rain.tkachenko.weather.R.menu;
-
 import android.app.Activity;
 import android.app.Dialog;
-import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.Display;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
+import android.widget.Toast;
 
-public class SettingsActivity extends Activity implements OnClickListener {
+public class SettingsActivity extends Activity {
 	private LinearLayout list;
 	final int MENU_DELETE = 2;
 	final int MENU_EDIT = 1;
@@ -53,7 +43,7 @@ public class SettingsActivity extends Activity implements OnClickListener {
 	private View tmpView = null;
 	private Button addCity;
 	private AutoCompleteTextView editText, addCityEditText;
-	private HashMap<String, Boolean> haveCity = new HashMap<String, Boolean>();
+	private TreeSet<String> haveCity = new TreeSet<String>();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -73,13 +63,12 @@ public class SettingsActivity extends Activity implements OnClickListener {
 
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 					long arg3) {
-				if (!haveCity.containsKey(arg0.getItemAtPosition(arg2)
-						.toString())) {
+				if (!haveCity.contains(arg0.getItemAtPosition(arg2).toString())) {
 					addCityEditText.setText(arg0.getItemAtPosition(arg2)
 							.toString());
 					String cur = arg0.getItemAtPosition(arg2).toString();
-					onClick(addCity);
-					haveCity.put(cur, true);
+					clickAdd(addCity, true);
+					haveCity.add(cur);
 					addCityEditText.setText("");
 
 				} else {
@@ -90,7 +79,6 @@ public class SettingsActivity extends Activity implements OnClickListener {
 
 		});
 
-		addCity.setOnClickListener(this);
 		list = (LinearLayout) findViewById(R.id.city_list);
 		mDbHelper = new CityDbAdapter(this);
 		mDbHelper.open();
@@ -105,12 +93,12 @@ public class SettingsActivity extends Activity implements OnClickListener {
 			do {
 				String data = cityCursor.getString(cityCursor
 						.getColumnIndex("city"));
-				if (haveCity.containsKey(data)) {
+				if (haveCity.contains(data)) {
 					continue;
 				}
 				addCityEditText.setText(data);
-				onClick(addCity);
-				haveCity.put(data, true);
+				clickAdd(addCity, false);
+				haveCity.add(data);
 
 			} while (cityCursor.moveToNext());
 		}
@@ -136,7 +124,6 @@ public class SettingsActivity extends Activity implements OnClickListener {
 			dialog.setCancelable(true);
 			editText = (AutoCompleteTextView) dialog
 					.findViewById(R.id.dialog_edit_text);
-			editText.setText(((TextView) tmpView).getText());
 
 			ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
 					android.R.layout.simple_dropdown_item_1line, Cities.CITIES);
@@ -145,9 +132,19 @@ public class SettingsActivity extends Activity implements OnClickListener {
 
 				public void onItemClick(AdapterView<?> arg0, View arg1,
 						int arg2, long arg3) {
-					editText.setText(arg0.getItemAtPosition(arg2).toString());
 					dialog.dismiss();
-					((TextView) tmpView).setText(editText.getText());
+					if (!haveCity.contains(editText.getText().toString())) {
+						mDbHelper.updateCity(((TextView) tmpView).getText()
+								.toString(), editText.getText().toString());
+						((TextView) tmpView).setText(editText.getText());
+						LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+								LayoutParams.WRAP_CONTENT,
+								LayoutParams.WRAP_CONTENT);
+						lp.setMargins(0, 15, 0, 0); // llp.setMargins(left,
+						((TextView) tmpView).setLayoutParams(lp);							// top, right, bottom);
+						fillData();
+					}
+
 				}
 
 			});
@@ -155,6 +152,7 @@ public class SettingsActivity extends Activity implements OnClickListener {
 			dialog.show();
 		} else {
 			mDbHelper.deleteCity(((TextView) tmpView).getText().toString());
+			haveCity.remove(((TextView) tmpView).getText().toString());
 			list.removeView(tmpView);
 			fillData();
 		}
@@ -167,24 +165,26 @@ public class SettingsActivity extends Activity implements OnClickListener {
 		return true;
 	}
 
-	public void onClick(View v) {
+	public void clickAdd(View v, boolean addToDb) {
 		// TODO Auto-generated method stub
 		switch (v.getId()) {
 		case R.id.addCity:
 
 			TextView tv = new TextView(getApplicationContext());
 			String cur = addCityEditText.getText().toString();
-			if (haveCity.containsKey(cur)) {
+			if (haveCity.contains(cur)) {
 				break;
 			}
 			tv.setText(cur);
 			Typeface tf = Typeface.createFromAsset(getAssets(),
 					"fonts/oblique.ttf");
-			// tv.setTypeface(tf);
+			tv.setTypeface(tf);
 			tv.setTextSize(30);
 			tv.setTextColor(Color.BLACK);
 			addCityEditText.setText("");
-			mDbHelper.createCity(tv.getText().toString());
+			if (addToDb) {
+				mDbHelper.createCity(tv.getText().toString());
+			}
 			list.addView(tv);
 
 			registerForContextMenu(tv);
@@ -216,5 +216,32 @@ public class SettingsActivity extends Activity implements OnClickListener {
 		}
 
 		return super.onMenuItemSelected(featureId, item);
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if ((keyCode == KeyEvent.KEYCODE_BACK)) {
+			if (haveCity.size() == 0) {
+				Toast.makeText(getApplicationContext(),
+						"Please choose at least one city", Toast.LENGTH_LONG)
+						.show();
+				return true;
+			}
+			Intent returnIntent = new Intent();
+			String[] data = new String[haveCity.size()];
+			int num = 0;
+			cityCursor = mDbHelper.fetchAllCity();
+			if (cityCursor.moveToFirst()) {
+				do {
+					data[num++] = cityCursor.getString(cityCursor
+							.getColumnIndex("city"));
+				} while (cityCursor.moveToNext());
+			}
+			cityCursor.close();
+			returnIntent.putExtra("data", data);
+			setResult(1, returnIntent);
+			finish();
+		}
+		return super.onKeyDown(keyCode, event);
 	}
 }

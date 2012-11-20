@@ -1,5 +1,7 @@
 package ru.ifmo.rain.tkachenko.weather;
 
+import java.util.ArrayList;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -77,10 +79,10 @@ public class CityDbAdapter {
 		long id = 0;
 		if (cityCursor.moveToFirst()) {
 			do {
-				if (cityCursor.getString(cityCursor.getColumnIndex("city"))
-						.equals(name)) {
+				String cur = cityCursor.getString(cityCursor
+						.getColumnIndex("city"));
+				if (cur.equals(name)) {
 					id = cityCursor.getLong(cityCursor.getColumnIndex("_id"));
-					break;
 				}
 			} while (cityCursor.moveToNext());
 		}
@@ -109,5 +111,35 @@ public class CityDbAdapter {
 		args.put(KEY_CITY, city);
 
 		return mDb.update(DATABASE_TABLE, args, KEY_ROWID + "=" + rowId, null) > 0;
+	}
+
+	public boolean updateCity(String name, String city) {
+		cityCursor = this.fetchAllCity();
+		long id = 0;
+		if (cityCursor.moveToFirst()) {
+			do {
+				String cur = cityCursor.getString(cityCursor
+						.getColumnIndex("city"));
+				if (cur.equals(name)) {
+					id = cityCursor.getLong(cityCursor.getColumnIndex("_id"));
+				}
+			} while (cityCursor.moveToNext());
+		}
+		cityCursor.close();
+		return this.updateCity(id, city);
+	}
+	
+	public ArrayList<String> getAllCities() {
+		ArrayList<String> ans = new ArrayList<String>();
+		cityCursor = this.fetchAllCity();
+		if (cityCursor.moveToFirst()) {
+			do {
+				String cur = cityCursor.getString(cityCursor
+						.getColumnIndex("city"));
+				ans.add(cur);
+			} while (cityCursor.moveToNext());
+		}
+		cityCursor.close();
+		return ans;
 	}
 }

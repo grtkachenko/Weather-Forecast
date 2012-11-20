@@ -5,105 +5,58 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Random;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.graphics.BitmapFactory;
-
 public class WeatherAPIHelper {
-	private static final String KEY = "34239673cd9dde87";
-	volatile private JSONObject json;
+	// private static final String KEY = "34239673cd9dde87";
+	// private static final String KEY_FIRST = "b6de292546742ab5";
+	// private static final String KEY_SECOND = "368167e36affbb8e";
+	private static final String KEYS[] = { "368167e36affbb8e",
+			"b6de292546742ab5", "34239673cd9dde87" };
+	private static Random random = new Random();
+	private static int pos = random.nextInt(3);
+
 	volatile private String link = "";
 
 	WeatherAPIItem getBriefForecast(String country, String city) {
 		return null;
 	}
 
-	public WeatherAPIItem getCurrentWeather(String country, String city) {
-		link = "http://api.wunderground.com/api/" + KEY + "/conditions/q/"
-				+ country + "/" + city + ".json";
 
-		Thread thread = new Thread(new Runnable() {
-
-			public void run() {
-				// TODO Auto-generated method stub
-				json = getJSONByLink(link);
-			}
-		});
-		thread.start();
-		while (json == null) {
-			try {
-				Thread.sleep(16);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-
-		String temperatureString = "", weather = "";
-		try {
-			temperatureString = json.getJSONObject("current_observation")
-					.getString("temp_c");
-			weather = json.getJSONObject("current_observation").getString(
-					"weather");
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
-		}
-		int temp = (Math.round((float) Double.parseDouble(temperatureString)));
-		return new WeatherAPIItem(country, city, weather, temp);
-	}
-
-	public WeatherAPIItem getHourWeather(String country, String city,
-			int numDayFromToday, int hh) {
-		// hh != 0
-		link = "http://api.wunderground.com/api/" + KEY + "/hourly10day/q/"
-				+ country + "/" + city + ".json";
-		Thread thread = new Thread(new Runnable() {
-
-			public void run() {
-				// TODO Auto-generated method stub
-				json = getJSONByLink(link);
-			}
-		});
-		thread.start();
-		while (json == null) {
-			try {
-				Thread.sleep(16);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		try {
-			thread.join();
-		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		String temperatureString = "", weather = "";
+	public ArrayList<WeatherAPIItem> getHourWeather(String country, String city) {
+		link = "http://api.wunderground.com/api/" + KEYS[pos]
+				+ "/hourly10day/q/" + country + "/" + city + ".json";
+		pos++;
+		pos %= 3;
+		ArrayList<WeatherAPIItem> ans = new ArrayList<WeatherAPIItem>();
+		JSONObject json = getJSONByLink(link);
 		try {
 			JSONArray array = json.getJSONArray("hourly_forecast");
-			int index = hh
-					+ numDayFromToday
-					* 24
-					- Integer.parseInt(array.getJSONObject(0)
-							.getJSONObject("FCTTIME").getString("hour"));
+			
+			for (int i = 0; i < 100; i++) {
+				int hnow = Integer.parseInt(array.getJSONObject(i)
+						.getJSONObject("FCTTIME").getString("hour")) % 24;
+				int tempNow = Integer.parseInt(array.getJSONObject(i)
+						.getJSONObject("temp").getString("metric"));
+				String condition = array.getJSONObject(i)
+						.getString("condition");
+				String weatherNow = array.getJSONObject(i).getString("icon");
+				ans.add(new WeatherAPIItem(country, city, weatherNow, hnow,
+						tempNow, condition));
 
-			temperatureString = array.getJSONObject(index)
-					.getJSONObject("temp").getString("metric");
+			}
 
-			weather = array.getJSONObject(index).getString("condition");
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		}
-		int temp = (Math.round((float) Double.parseDouble(temperatureString)));
-		return new WeatherAPIItem(country, city, weather, temp);
+		return ans;
 	}
 
 	public JSONObject getJSONByLink(String link) {

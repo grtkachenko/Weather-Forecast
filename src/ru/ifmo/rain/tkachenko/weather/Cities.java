@@ -1,5 +1,6 @@
 package ru.ifmo.rain.tkachenko.weather;
 
+import java.util.HashMap;
 import java.util.TreeSet;
 
 public class Cities {
@@ -101,13 +102,13 @@ public class Cities {
 			"Guiping, China", "Huainan, China", "Kochi, India",
 			"Suining, China", "Bozhou, China", "Zhanjiang, China",
 			"Changde, China", "Montevideo, Uruguay", "Suzhou, China",
-			"Xintai, China", "Ekaterinoburg, Russia", "Handan, China",
+			"Xintai, China", "Yekaterinburg, Russia", "Handan, China",
 			"Visakhapatnam, India", "Kawasaki, Japan", "Jiangjin, China",
 			"Pingdu, China", "Agra, India", "Jiangyin, China",
 			"Tijuana, Mexico", "Liuyang, China", "Bursa, Turkey",
 			"Makkah, Saudi Arabia", "Yaounde, Cameroon", "Xuanwei, China",
 			"Dengzhou, China", "Palembang, Indonesia",
-			"Nizhny Novgorod, Russia", "Guarulhos, Brazil", "Heze, China",
+			"Nizhniy Novgorod, Russia", "Guarulhos, Brazil", "Heze, China",
 			"Auckland, New Zealand", "Omdurman, Sudan", "Shantou, China",
 			"Leizhou, China", "Yongcheng, China", "Valencia, Venezuela",
 			"Thane, India", "San Antonio, United States", "Xinyang, China",
@@ -144,29 +145,105 @@ public class Cities {
 			"Jiangdu, China", "Xiangcheng, China", "Zigong, China",
 			"Jining, China", "Edmonton, Canada", "Allahabad, India",
 			"Beiliu, China", "Dnipropetrovsk, Ukraine", "Gongzhuling, China",
-			"Qinzhou, China", "Ufa, Russia", "Sendai, Japan",
-			"Volgograd, Russia", "Ezhou, China", "Guatemala City, Guatemala",
-			"Zhongxiang, China", "Amsterdam, Netherlands", "Brussels, Belgium",
-			"Bamako, Mali", "Ziyang, China", "Antananarivo, Madagascar",
-			"Mudanjiang, China", "Amritsar, India", "Vijayawada, India",
-			"Haora, India", "Huazhou, China", "Fuzhou, China",
-			"Pimpri Chinchwad, India", "Dublin, Ireland", "Rajkot, India",
-			"Lianyuan, China", "Liupanshui, China", "Kaduna, Nigeria",
-			"Kitakyushu, Japan", "Qianjiang, China", "Perm, Russia",
-			"Odessa, Ukraine", "Qom, Iran", "Yongchuan, China",
-			"Peshawar, Pakistan", "Linzhou, China", "Benxi, China",
-			"Ulaanbaatar, Mongolia", "Zhangqiu, China", "Yongzhou, China",
-			"Srinagar, India", "Ghaziabad, India", "Xinyi, China",
-			"Zhangjiagang, China", "Wafangdian, China", "Xianyang, China",
-			"Liaocheng, China", "Ahwaz, Iran", "Taishan, China",
-			"Linhai, China", "Feicheng, China", "Suwon, South Korea",
-			"Wuwei, China", "Haimen, China", "Liling, China", "Xinhui, China",
-			"Gaziantep, Turkey", "Krasnoyarsk, Russia", "Chiba, Japan",
-			"Voronezh, Russia", "Ruzhou, China", "Yichun, China" };
-	static TreeSet<String> set = new TreeSet<String>();
+			"Qinzhou, China", "Sendai, Japan", "Volgograd, Russia",
+			"Ezhou, China", "Guatemala City, Guatemala", "Zhongxiang, China",
+			"Amsterdam, Netherlands", "Brussels, Belgium", "Bamako, Mali",
+			"Ziyang, China", "Antananarivo, Madagascar", "Mudanjiang, China",
+			"Amritsar, India", "Vijayawada, India", "Haora, India",
+			"Huazhou, China", "Fuzhou, China", "Pimpri Chinchwad, India",
+			"Dublin, Ireland", "Rajkot, India", "Lianyuan, China",
+			"Liupanshui, China", "Kaduna, Nigeria", "Kitakyushu, Japan",
+			"Qianjiang, China", "Odessa, Ukraine", "Qom, Iran",
+			"Yongchuan, China", "Peshawar, Pakistan", "Linzhou, China",
+			"Benxi, China", "Ulaanbaatar, Mongolia", "Zhangqiu, China",
+			"Yongzhou, China", "Srinagar, India", "Ghaziabad, India",
+			"Xinyi, China", "Zhangjiagang, China", "Wafangdian, China",
+			"Xianyang, China", "Liaocheng, China", "Ahwaz, Iran",
+			"Taishan, China", "Linhai, China", "Feicheng, China",
+			"Suwon, South Korea", "Wuwei, China", "Haimen, China",
+			"Liling, China", "Xinhui, China", "Gaziantep, Turkey",
+			"Krasnoyarsk, Russia", "Chiba, Japan", "Voronezh, Russia",
+			"Ruzhou, China", "Yichun, China" };
+	public static HashMap<String, String> states = new HashMap<String, String>();
+	public static TreeSet<String> set = new TreeSet<String>();
 	static {
 		for (int i = 0; i < CITIES.length; i++) {
 			set.add(CITIES[i]);
 		}
+		states.put("New_York", "New_York");
+		states.put("Los_Angeles", "California");
+		states.put("Chicago", "Illinois");
+		states.put("San_Francisco", "California");
+		states.put("Philadelphia", "Pennsylvania");
+		states.put("Miami", "Florida");
+		states.put("Dallas", "Texas");
+		states.put("Boston", "Massachusetts");
+		states.put("Houston", "Texas");
+		states.put("Atlanta", "Georgia");
+		states.put("Detroit", "Michigan");
+		states.put("Phoenix", "Arizona");
+		states.put("San_Diego", "California");
+		states.put("Seattle", "Washington");
+		states.put("Minneapolis", "Minnesota");
+		states.put("Tampa", "Florida");
+		states.put("Denver", "Colorado");
+		states.put("Baltimore", "Maryland");
+		states.put("San_Antonio", "Texas");
+	}
+
+	public static String getCity(int index) {
+		String ans = "";
+		for (int i = 0; i < CITIES[index].length(); i++) {
+			if (CITIES[index].charAt(i) == ',') {
+				return ans;
+			}
+			ans += CITIES[index].charAt(i);
+		}
+		return ans;
+	}
+
+	public static String getCity(String data) {
+		String ans = "";
+		for (int i = 0; i < data.length(); i++) {
+			if (data.charAt(i) == ',') {
+				return ans;
+			}
+			if (data.charAt(i) == ' ') {
+				ans += '_';
+			} else {
+				ans += data.charAt(i);
+			}
+		}
+		return ans;
+	}
+
+	public static String getOKCity(String data) {
+		String ans = "";
+		for (int i = 0; i < data.length(); i++) {
+			if (data.charAt(i) == ',') {
+				return ans;
+			}
+			ans += data.charAt(i);
+		}
+		return ans;
+	}
+
+	public static String getCountry(String data) {
+		String ans = "";
+		int num = 0;
+		for (int i = 0; i < data.length(); i++) {
+			if (data.charAt(i) == ',') {
+				num = i + 2;
+				break;
+			}
+		}
+		for (int i = num; i < data.length(); i++) {
+			if (data.charAt(i) == ' ') {
+				ans += '_';
+			} else {
+				ans += data.charAt(i);
+			}
+		}
+		return ans;
 	}
 }

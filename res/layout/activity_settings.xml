@@ -19,6 +19,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ems="10"
+                android:hint="Type here city/country name"
+                android:singleLine="true"
                 android:text="" >
 
                 <requestFocus />
@@ -43,7 +45,6 @@
                 android:layout_height="match_parent"
                 android:gravity="left"
                 android:orientation="vertical" >
-
             </LinearLayout>
         </ScrollView>
     </LinearLayout>
