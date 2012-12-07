@@ -3,47 +3,58 @@ package ru.ifmo.rain.tkachenko.activities;
 import java.util.ArrayList;
 import java.util.TreeSet;
 
+import ru.ifmo.rain.tkachenko.weather.AlarmManagerBroadcastReceiver;
 import ru.ifmo.rain.tkachenko.weather.Cities;
 import ru.ifmo.rain.tkachenko.weather.CityDbAdapter;
 import ru.ifmo.rain.tkachenko.weather.R;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.graphics.Color;
-import android.graphics.Typeface;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TimePicker;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class SettingsActivity extends Activity {
-	private LinearLayout list;
+	private ListView list;
 	final int MENU_DELETE = 2;
 	final int MENU_EDIT = 1;
 	final int EDIT_DIALOG = 1;
 	final int DELETE_ALL_ID = 3;
 	private Dialog dialog;
+	private TimePicker timePicker;
+	private int pos = 0;
 	private Cursor cityCursor;
 	private CityDbAdapter mDbHelper;
-	private View tmpView = null;
-	private Button addCity;
+	private Button addCity, updSetOK;
+	private ArrayList<String> listItems = new ArrayList<String>();
+	private ArrayAdapter<String> adapterList;
 	private AutoCompleteTextView editText, addCityEditText;
 	private TreeSet<String> haveCity = new TreeSet<String>();
+	boolean usedHeight = false;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -52,15 +63,64 @@ public class SettingsActivity extends Activity {
 		this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.activity_settings);
-
 		addCity = (Button) findViewById(R.id.addCity);
-		addCityEditText = (AutoCompleteTextView) findViewById(R.id.addCityEditText);
+		updSetOK = (Button) findViewById(R.id.updSetOk);
+		timePicker = (TimePicker) findViewById(R.id.timePicker);
+		timePicker.setIs24HourView(true);
+		timePicker
+				.setCurrentHour(AlarmManagerBroadcastReceiver.updateTime / 1000 / 60 / 60);
 
+		timePicker
+				.setCurrentMinute((AlarmManagerBroadcastReceiver.updateTime - AlarmManagerBroadcastReceiver.updateTime
+						/ 1000 / 60 / 60 * (1000 * 60 * 60)) / 1000 / 60);
+
+		updSetOK.setOnClickListener(new OnClickListener() {
+
+			public void onClick(View v) {
+				AlarmManagerBroadcastReceiver.updateTime = (timePicker
+						.getCurrentHour() * 60 + timePicker.getCurrentMinute()) * 60 * 1000 + 500;
+			}
+		});
+
+		Display display = getWindowManager().getDefaultDisplay();
+		Point size = new Point();
+		display.getSize(size);
+		usedHeight = Math.max(size.x, size.y) < 800;
+		if (usedHeight) {
+			addCity.setTextSize(15);
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+		}
+		addCityEditText = (AutoCompleteTextView) findViewById(R.id.addCityEditText);
+		addCity.setOnClickListener(new OnClickListener() {
+
+			public void onClick(View v) {
+				// onKeyDown(KeyEvent.KEYCODE_BACK, new KeyEvent());
+				if (haveCity.size() == 0) {
+					Toast.makeText(getApplicationContext(),
+							"Please choose at least one city",
+							Toast.LENGTH_LONG).show();
+				} else {
+					Intent returnIntent = new Intent();
+					String[] data = new String[haveCity.size()];
+					int num = 0;
+					cityCursor = mDbHelper.fetchAllCity();
+					if (cityCursor.moveToFirst()) {
+						do {
+							data[num++] = cityCursor.getString(cityCursor
+									.getColumnIndex("city"));
+						} while (cityCursor.moveToNext());
+					}
+					cityCursor.close();
+					returnIntent.putExtra("data", data);
+					setResult(1, returnIntent);
+					finish();
+				}
+			}
+		});
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_dropdown_item_1line, Cities.CITIES);
 		addCityEditText.setAdapter(adapter);
 		addCityEditText.setOnItemClickListener(new OnItemClickListener() {
-
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 					long arg3) {
 				if (!haveCity.contains(arg0.getItemAtPosition(arg2).toString())) {
@@ -79,7 +139,20 @@ public class SettingsActivity extends Activity {
 
 		});
 
-		list = (LinearLayout) findViewById(R.id.city_list);
+		list = (ListView) findViewById(R.id.listView);
+		adapterList = new ArrayAdapter<String>(this,
+				android.R.layout.simple_list_item_1, listItems);
+		list.setAdapter(adapterList);
+		list.setOnItemLongClickListener(new OnItemLongClickListener() {
+
+			public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
+					int position, long id) {
+				pos = position;
+				openContextMenu(list);
+				return true;
+			}
+		});
+		registerForContextMenu(list);
 		mDbHelper = new CityDbAdapter(this);
 		mDbHelper.open();
 		fillData();
@@ -87,7 +160,7 @@ public class SettingsActivity extends Activity {
 
 	private void fillData() {
 		haveCity.clear();
-		list.removeAllViews();
+		adapterList.clear();
 		cityCursor = mDbHelper.fetchAllCity();
 		if (cityCursor.moveToFirst()) {
 			do {
@@ -102,20 +175,18 @@ public class SettingsActivity extends Activity {
 
 			} while (cityCursor.moveToNext());
 		}
+		adapterList.notifyDataSetChanged();
 		cityCursor.close();
 	}
 
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
-		// TODO Auto-generated method stub
 		menu.add(1, MENU_EDIT, 0, "Edit");
 		menu.add(2, MENU_DELETE, 0, "Delete");
-		tmpView = v;
 	}
 
 	public boolean onContextItemSelected(MenuItem item) {
-		// TODO Auto-generated method stub
 		if (item.getItemId() == MENU_EDIT) {
 
 			dialog = new Dialog(SettingsActivity.this);
@@ -134,14 +205,12 @@ public class SettingsActivity extends Activity {
 						int arg2, long arg3) {
 					dialog.dismiss();
 					if (!haveCity.contains(editText.getText().toString())) {
-						mDbHelper.updateCity(((TextView) tmpView).getText()
-								.toString(), editText.getText().toString());
-						((TextView) tmpView).setText(editText.getText());
-						LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-								LayoutParams.WRAP_CONTENT,
-								LayoutParams.WRAP_CONTENT);
-						lp.setMargins(0, 15, 0, 0); // llp.setMargins(left,
-						((TextView) tmpView).setLayoutParams(lp);							// top, right, bottom);
+
+						mDbHelper.updateCity(adapterList.getItem(pos), editText
+								.getText().toString(), "", "", "", "");
+
+						adapterList.insert(editText.getText().toString(), pos);
+						// top, right, bottom);
 						fillData();
 					}
 
@@ -151,9 +220,9 @@ public class SettingsActivity extends Activity {
 
 			dialog.show();
 		} else {
-			mDbHelper.deleteCity(((TextView) tmpView).getText().toString());
-			haveCity.remove(((TextView) tmpView).getText().toString());
-			list.removeView(tmpView);
+			mDbHelper.deleteCity(adapterList.getItem(pos));
+			haveCity.remove(adapterList.getItem(pos));
+			adapterList.remove(adapterList.getItem(pos));
 			fillData();
 		}
 		return super.onContextItemSelected(item);
@@ -166,7 +235,6 @@ public class SettingsActivity extends Activity {
 	}
 
 	public void clickAdd(View v, boolean addToDb) {
-		// TODO Auto-generated method stub
 		switch (v.getId()) {
 		case R.id.addCity:
 
@@ -175,17 +243,25 @@ public class SettingsActivity extends Activity {
 			if (haveCity.contains(cur)) {
 				break;
 			}
+			//
 			tv.setText(cur);
-			Typeface tf = Typeface.createFromAsset(getAssets(),
-					"fonts/oblique.ttf");
-			tv.setTypeface(tf);
+			// Typeface tf = Typeface.createFromAsset(getAssets(),
+			// "fonts/oblique.ttf");
+			// tv.setTypeface(tf);
 			tv.setTextSize(30);
+			LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+					LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+			lp.setMargins(0, 15, 0, 0); // llp.setMargins(left,
+			tv.setLayoutParams(lp);
 			tv.setTextColor(Color.BLACK);
 			addCityEditText.setText("");
 			if (addToDb) {
-				mDbHelper.createCity(tv.getText().toString());
+				mDbHelper.createCity(tv.getText().toString(), "",
+				// "7 $ 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 $ 1/5",
+						"", "", "");
+
 			}
-			list.addView(tv);
+			adapterList.add(tv.getText().toString());
 
 			registerForContextMenu(tv);
 			break;

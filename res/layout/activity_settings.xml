@@ -1,7 +1,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:background="@color/white" >
 
     <LinearLayout
@@ -10,7 +10,7 @@
         android:orientation="vertical" >
 
         <LinearLayout
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal" >
 
@@ -18,35 +18,55 @@
                 android:id="@+id/addCityEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:ems="10"
                 android:hint="Type here city/country name"
-                android:singleLine="true"
-                android:text="" >
-
-                <requestFocus />
-            </AutoCompleteTextView>
+                android:singleLine="true" />
 
             <Button
                 android:id="@+id/addCity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="6"
-                android:text="+" />
+                android:layout_weight="4"
+                android:text="Done" />
         </LinearLayout>
 
-        <ScrollView
-            android:id="@+id/scrollView1"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent" >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <TimePicker
+                android:id="@+id/timePicker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
 
             <LinearLayout
-                android:id="@+id/city_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:gravity="left"
+                android:layout_weight="2"
                 android:orientation="vertical" >
+
+                <TextView
+                    android:id="@+id/textView1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Set upd time (hh/mm)" />
+
+                <Button
+                    android:id="@+id/updSetOk"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ok" />
             </LinearLayout>
-        </ScrollView>
+        </LinearLayout>
+
+        <ListView
+            android:id="@+id/listView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+        </ListView>
+
     </LinearLayout>
 
 </RelativeLayout>

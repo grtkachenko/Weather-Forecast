@@ -165,6 +165,7 @@ public class Cities {
 			"Krasnoyarsk, Russia", "Chiba, Japan", "Voronezh, Russia",
 			"Ruzhou, China", "Yichun, China" };
 	public static HashMap<String, String> states = new HashMap<String, String>();
+	public static HashMap<String, String> getCountryByCity = new HashMap<String, String>();
 	public static TreeSet<String> set = new TreeSet<String>();
 	static {
 		for (int i = 0; i < CITIES.length; i++) {
@@ -189,6 +190,9 @@ public class Cities {
 		states.put("Denver", "Colorado");
 		states.put("Baltimore", "Maryland");
 		states.put("San_Antonio", "Texas");
+		for (int i = 0; i < CITIES.length; i++) {
+			getCountryByCity.put(getCity(CITIES[i]), getCountry(CITIES[i]));
+		}
 	}
 
 	public static String getCity(int index) {

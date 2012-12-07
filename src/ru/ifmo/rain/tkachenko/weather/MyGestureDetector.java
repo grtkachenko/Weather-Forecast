@@ -10,6 +10,7 @@ public class MyGestureDetector extends GestureDetector.SimpleOnGestureListener {
 	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
 	MainActivity mainActivity;
 	public static int last = 0;
+
 	public MyGestureDetector(MainActivity mainActivity) {
 		this.mainActivity = mainActivity;
 	}
@@ -25,13 +26,17 @@ public class MyGestureDetector extends GestureDetector.SimpleOnGestureListener {
 					&& Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
 				// Left
 				last = 0;
-				mainActivity.toNextCity();
+				if (mainActivity.isCalced) {
+					mainActivity.toNextCity();
+				}
 
 			} else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE
 					&& Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
 				// Right
 				last = 1;
-				mainActivity.toPrevCity();
+				if (mainActivity.isCalced) {
+					mainActivity.toPrevCity();
+				}
 			}
 		} catch (Exception e) {
 			// nothing

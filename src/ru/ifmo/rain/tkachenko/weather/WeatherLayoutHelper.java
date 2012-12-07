@@ -2,7 +2,9 @@ package ru.ifmo.rain.tkachenko.weather;
 
 import java.util.ArrayList;
 
+import ru.ifmo.rain.tkachenko.activities.MainActivity;
 import android.graphics.Typeface;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageView;
@@ -17,7 +19,7 @@ public class WeatherLayoutHelper {
 	public String weatherIcon, timeString, whenUpdated;
 
 	private TextView time, temperature;
-	private static final int[] checkPointHour = {0, 7, 13, 20 };
+	private static final int[] checkPointHour = { 0, 7, 13, 20 };
 	private ImageView weather, tick;
 	public ArrayList<WeatherLayoutHelper> today;
 
@@ -117,7 +119,10 @@ public class WeatherLayoutHelper {
 	}
 
 	public void setTemperatureSize(float size) {
-		temperature.setTextSize(size);
+		DisplayMetrics metrics = MainActivity.mainActivity.getResources()
+				.getDisplayMetrics();
+		float fpixels = metrics.density * size;
+		temperature.setTextSize(fpixels);
 	}
 
 	public void setTemperatureValue(int from, int to) {

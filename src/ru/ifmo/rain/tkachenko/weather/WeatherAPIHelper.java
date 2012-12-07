@@ -27,7 +27,6 @@ public class WeatherAPIHelper {
 		return null;
 	}
 
-
 	public ArrayList<WeatherAPIItem> getHourWeather(String country, String city) {
 		link = "http://api.wunderground.com/api/" + KEYS[pos]
 				+ "/hourly10day/q/" + country + "/" + city + ".json";
@@ -37,7 +36,7 @@ public class WeatherAPIHelper {
 		JSONObject json = getJSONByLink(link);
 		try {
 			JSONArray array = json.getJSONArray("hourly_forecast");
-			
+
 			for (int i = 0; i < 100; i++) {
 				int hnow = Integer.parseInt(array.getJSONObject(i)
 						.getJSONObject("FCTTIME").getString("hour")) % 24;
@@ -54,6 +53,8 @@ public class WeatherAPIHelper {
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return null;
+		} catch (Exception e) {
 			return null;
 		}
 		return ans;
