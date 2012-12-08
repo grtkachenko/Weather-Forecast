@@ -6,21 +6,22 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 
-import ru.ifmo.rain.tkachenko.weather.AlarmManagerBroadcastReceiver;
-import ru.ifmo.rain.tkachenko.weather.Cities;
-import ru.ifmo.rain.tkachenko.weather.CityDbAdapter;
-import ru.ifmo.rain.tkachenko.weather.CityDbItem;
-import ru.ifmo.rain.tkachenko.weather.IconHelper;
-import ru.ifmo.rain.tkachenko.weather.MyGestureDetector;
+import ru.ifmo.rain.tkachenko.alarm.AlarmManagerBroadcastReceiver;
+import ru.ifmo.rain.tkachenko.helpers.Cities;
+import ru.ifmo.rain.tkachenko.helpers.IconHelper;
+import ru.ifmo.rain.tkachenko.helpers.MyGestureDetector;
+import ru.ifmo.rain.tkachenko.helpers.WeatherLayoutHelper;
+import ru.ifmo.rain.tkachenko.providers.CityDbHelper;
+import ru.ifmo.rain.tkachenko.providers.CityDbItem;
 import ru.ifmo.rain.tkachenko.weather.R;
-import ru.ifmo.rain.tkachenko.weather.WeatherAPIHelper;
-import ru.ifmo.rain.tkachenko.weather.WeatherAPIItem;
-import ru.ifmo.rain.tkachenko.weather.WeatherLayoutHelper;
+import ru.ifmo.rain.tkachenko.weather_api_stuff.WeatherAPIHelper;
+import ru.ifmo.rain.tkachenko.weather_api_stuff.WeatherAPIItem;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -57,7 +58,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	private boolean debugWithNoInternet = false;
 	public TableLayout table;
 	private RelativeLayout allWorkspace;
-	private CityDbAdapter mDbHelper;
+	private CityDbHelper mDbHelper;
 	public LinearLayout fourDaysLayout, todayLayout, allBottomLayout;
 	private WeatherAPIHelper weatherApiHelper = new WeatherAPIHelper();
 
@@ -68,20 +69,37 @@ public class MainActivity extends Activity implements OnClickListener {
 			"Sat" };
 	private View line;
 	private ProgressBar progressBar;
-	private int curDay = 0;
+	private int currentDay = 0;
 	private String[] cityList;
 
 	private volatile int currentCity = 0;
 	private HashMap<String, ArrayList<WeatherAPIItem>> cache = new HashMap<String, ArrayList<WeatherAPIItem>>();
 	private HashMap<String, String> updateCache = new HashMap<String, String>();
 	private boolean needDeleteDatabase = false;
-	private AlarmManagerBroadcastReceiver alarm;
+	public static AlarmManagerBroadcastReceiver alarm = new AlarmManagerBroadcastReceiver();;
+
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		SharedPreferences.Editor editor = getPreferences(MODE_PRIVATE).edit();
+		editor.putInt("currentCity", currentCity);
+		editor.putInt("currentDay", currentDay);
+		editor.putInt("timeInterval", MainActivity.alarm.getUpdateTime());
+		editor.commit();
+		super.onDestroy();
+	}
 
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		this.mainActivity = this;
+		SharedPreferences prefs = getPreferences(MODE_PRIVATE);
+		if (prefs.contains("currentCity")) {
+			currentCity = prefs.getInt("currentCity", -1);
+			currentDay = prefs.getInt("currentDay", -1);
+			MainActivity.alarm.setUpdateTime(prefs.getInt("timeInterval", -1));
+		}
+		MainActivity.mainActivity = this;
 
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -90,7 +108,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		Display display = getWindowManager().getDefaultDisplay();
 		Point size = new Point();
 		display.getSize(size);
-		needChange = Math.max(size.x, size.y) < 800;
+		needChange = Math.max(size.x, size.y) <= 800;
 		allWorkspace = (RelativeLayout) findViewById(R.id.all_workspace);
 		if (!isNetworkConnected()) {
 			AlertDialog alertDialog = new AlertDialog.Builder(this).create();
@@ -197,12 +215,11 @@ public class MainActivity extends Activity implements OnClickListener {
 			fourDays[i].setOnClickListener(this);
 			day = (day + 1) % 7;
 		}
-		fourDays[0].showTick(true);
-		mDbHelper = new CityDbAdapter(this);
+		fourDays[currentDay].showTick(true);
+		mDbHelper = new CityDbHelper(this);
 		if (needDeleteDatabase) {
 			mDbHelper.deleteDatabase();
 		}
-		mDbHelper.open();
 		Intent intent = new Intent();
 		ArrayList<CityDbItem> help = mDbHelper.getAllCityItems();
 
@@ -219,8 +236,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		onActivityResult(1, 0, intent);
 		initViews();
 
-		alarm = new AlarmManagerBroadcastReceiver();
-		alarm.SetAlarm(this);
+		alarm.setAlarm(this);
 	}
 
 	public int getCitySize(int val) {
@@ -235,18 +251,18 @@ public class MainActivity extends Activity implements OnClickListener {
 		super.onSaveInstanceState(outState);
 
 		outState.putInt("curCity", currentCity);
-		outState.putInt("curDay", curDay);
+		outState.putInt("curDay", currentDay);
 	}
 
 	protected void onRestoreInstanceState(Bundle savedInstanceState) {
 		super.onRestoreInstanceState(savedInstanceState);
 		currentCity = savedInstanceState.getInt("curCity");
-		curDay = savedInstanceState.getInt("curDay");
+		currentDay = savedInstanceState.getInt("curDay");
 		for (int i = 0; i < 4; i++) {
 			fourDays[i].showTick(false);
 		}
-		fourDays[curDay].showTick(true);
-		View v = fourDays[curDay].layout;
+		fourDays[currentDay].showTick(true);
+		View v = fourDays[currentDay].layout;
 		onClick(v);
 	}
 
@@ -271,48 +287,48 @@ public class MainActivity extends Activity implements OnClickListener {
 		// TODO Auto-generated method stub
 		switch (v.getId()) {
 		case R.id.layout_day1:
-			if (curDay == 0) {
+			if (currentDay == 0) {
 				break;
 			}
 			table.startAnimation(AnimationUtils.loadAnimation(this,
 					R.anim.falling_from_left));
-			fourDays[curDay].showTick(false);
-			curDay = 0;
-			fourDays[curDay].showTick(true);
+			fourDays[currentDay].showTick(false);
+			currentDay = 0;
+			fourDays[currentDay].showTick(true);
 			fillToday();
 			break;
 		case R.id.layout_day2:
-			if (curDay == 1) {
+			if (currentDay == 1) {
 				break;
 			}
 			table.startAnimation(AnimationUtils.loadAnimation(this,
 					R.anim.falling_from_left));
 
-			fourDays[curDay].showTick(false);
-			curDay = 1;
-			fourDays[curDay].showTick(true);
+			fourDays[currentDay].showTick(false);
+			currentDay = 1;
+			fourDays[currentDay].showTick(true);
 			fillToday();
 			break;
 		case R.id.layout_day3:
-			if (curDay == 2) {
+			if (currentDay == 2) {
 				break;
 			}
 			table.startAnimation(AnimationUtils.loadAnimation(this,
 					R.anim.falling_from_left));
-			fourDays[curDay].showTick(false);
-			curDay = 2;
-			fourDays[curDay].showTick(true);
+			fourDays[currentDay].showTick(false);
+			currentDay = 2;
+			fourDays[currentDay].showTick(true);
 			fillToday();
 			break;
 		case R.id.layout_day4:
-			if (curDay == 3) {
+			if (currentDay == 3) {
 				break;
 			}
 			table.startAnimation(AnimationUtils.loadAnimation(this,
 					R.anim.falling_from_left));
-			fourDays[curDay].showTick(false);
-			curDay = 3;
-			fourDays[curDay].showTick(true);
+			fourDays[currentDay].showTick(false);
+			currentDay = 3;
+			fourDays[currentDay].showTick(true);
 			fillToday();
 			break;
 		case R.id.settings:
@@ -343,6 +359,13 @@ public class MainActivity extends Activity implements OnClickListener {
 
 			Bundle extra = data.getExtras();
 			if (extra != null) {
+				ArrayList<CityDbItem> help = mDbHelper.getAllCityItems();
+				for (int i = 0; i < help.size(); i++) {
+					if (help.get(i).time.length() != 0) {
+						cache.put(help.get(i).city, help.get(i).getItemList());
+						updateCache.put(help.get(i).city, help.get(i).time);
+					}
+				}
 				allBottomLayout.setVisibility(View.INVISIBLE);
 				HashMap<String, ArrayList<WeatherAPIItem>> tmpCache = new HashMap<String, ArrayList<WeatherAPIItem>>();
 				HashMap<String, String> tmpCacheUpd = new HashMap<String, String>();
@@ -364,14 +387,22 @@ public class MainActivity extends Activity implements OnClickListener {
 					onClick(settings);
 					return;
 				}
-				currentCity = 0;
+				if (currentCity > cityList.length) {
+					currentCity = 0;
+				} else {
+					currentCity--;
+				}
+				if (currentCity < 0 || currentCity >= cityList.length) {
+					currentCity = 0;
+				}
 				allWorkspace.setVisibility(View.VISIBLE);
 				fourDaysLayout.setVisibility(View.INVISIBLE);
 				table.setVisibility(View.INVISIBLE);
 				todayLayout.setVisibility(View.INVISIBLE);
 				line.setVisibility(View.INVISIBLE);
 				MyGestureDetector.last = 1;
-				currentCityList.setText("" + 1 + "/" + cityList.length);
+				currentCityList.setText("" + (currentCity + 1) + "/"
+						+ cityList.length);
 				whenUpdated.setText("...");
 				toNextCity();
 			}
@@ -673,7 +704,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	boolean isRemoved = false;
 
 	public void fillToday() {
-		if (fourDays[curDay].today.size() == 4) {
+		if (fourDays[currentDay].today.size() == 4) {
 			if (isRemoved) {
 				table.removeAllViews();
 				for (int i = 0; i < 4; i++) {
@@ -684,9 +715,9 @@ public class MainActivity extends Activity implements OnClickListener {
 			}
 			for (int i = 0; i < today.length; i++) {
 				today[i].setWeatherImage(IconHelper
-						.getId(fourDays[curDay].today.get(i).weatherIcon));
-				today[i].setTemperatureValue(fourDays[curDay].today.get(i).now);
-				today[i].setName(fourDays[curDay].today.get(i).timeString);
+						.getId(fourDays[currentDay].today.get(i).weatherIcon));
+				today[i].setTemperatureValue(fourDays[currentDay].today.get(i).now);
+				today[i].setName(fourDays[currentDay].today.get(i).timeString);
 			}
 		} else {
 			if (isRemoved) {
@@ -697,14 +728,15 @@ public class MainActivity extends Activity implements OnClickListener {
 				isRemoved = false;
 
 			}
-			table.removeViews(0, 4 - fourDays[curDay].today.size());
+			table.removeViews(0, 4 - fourDays[currentDay].today.size());
 			isRemoved = true;
 			int index = 0;
-			for (int i = 4 - fourDays[curDay].today.size(); i < today.length; i++) {
+			for (int i = 4 - fourDays[currentDay].today.size(); i < today.length; i++) {
 				today[i].setWeatherImage(IconHelper
-						.getId(fourDays[curDay].today.get(index).weatherIcon));
-				today[i].setTemperatureValue(fourDays[curDay].today.get(index).now);
-				today[i].setName(fourDays[curDay].today.get(index).timeString);
+						.getId(fourDays[currentDay].today.get(index).weatherIcon));
+				today[i].setTemperatureValue(fourDays[currentDay].today
+						.get(index).now);
+				today[i].setName(fourDays[currentDay].today.get(index).timeString);
 
 				index++;
 			}

@@ -1,6 +1,7 @@
-<manifest package="ru.ifmo.rain.tkachenko.weather"
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="ru.ifmo.rain.tkachenko.weather"
     android:versionCode="1"
-    android:versionName="1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+    android:versionName="1.0" >
 
     <uses-sdk
         android:minSdkVersion="15"
@@ -17,7 +18,8 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <receiver
-            android:name=".AlarmManagerBroadcastReceiver"            android:process=":remote" >
+            android:name="ru.ifmo.rain.tkachenko.alarm.AlarmManagerBroadcastReceiver"
+            android:process=":remote" >
         </receiver>
 
         <activity
@@ -31,9 +33,17 @@
         </activity>
         <activity
             android:name="ru.ifmo.rain.tkachenko.activities.SettingsActivity"
-            android:label="@string/title_activity_settings" >
+            android:label="@string/title_activity_settings"
+            android:screenOrientation="portrait" >
         </activity>
-        <service android:name="AlarmService"></service>
+
+        <service android:name="AlarmService" >
+        </service>
+
+        <provider
+            android:name="ru.ifmo.rain.tkachenko.providers.CityContentProvider"
+            android:authorities="@string/authority" >
+        </provider>
     </application>
 
 </manifest>
