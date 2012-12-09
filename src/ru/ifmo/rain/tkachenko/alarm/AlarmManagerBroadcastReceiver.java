@@ -1,5 +1,6 @@
 package ru.ifmo.rain.tkachenko.alarm;
 
+import ru.ifmo.rain.tkachenko.activities.MainActivity;
 import ru.ifmo.rain.tkachenko.providers.CityDbHelper;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -7,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.PowerManager;
+import android.util.Log;
 
 public class AlarmManagerBroadcastReceiver extends BroadcastReceiver {
 	private static int updateTime = 1000 * 60 * 60 * 3;
@@ -21,7 +23,8 @@ public class AlarmManagerBroadcastReceiver extends BroadcastReceiver {
 				PowerManager.PARTIAL_WAKE_LOCK, "");
 		wl.acquire();
 		doMyUpdate(context);
-		// Toast.makeText(context, "OK", Toast.LENGTH_LONG).show();
+		Log.d("db_upd", "OK");
+		Log.d("db_upd", "active is " + MainActivity.active);
 		wl.release();
 	}
 

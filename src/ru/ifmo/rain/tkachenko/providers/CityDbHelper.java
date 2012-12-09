@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import ru.ifmo.rain.tkachenko.activities.MainActivity;
 import ru.ifmo.rain.tkachenko.helpers.Cities;
 import ru.ifmo.rain.tkachenko.weather_api_stuff.WeatherAPIHelper;
 import ru.ifmo.rain.tkachenko.weather_api_stuff.WeatherAPIItem;
@@ -14,6 +15,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.util.Log;
 
 public class CityDbHelper {
 	public static final String KEY_CITY = "city";
@@ -152,6 +154,7 @@ public class CityDbHelper {
 	public ArrayList<CityDbItem> getAllCityItems() {
 		ArrayList<CityDbItem> ans = new ArrayList<CityDbItem>();
 		cityCursor = this.fetchAllCity();
+		
 		if (cityCursor.moveToFirst()) {
 			do {
 				ans.add(new CityDbItem(
@@ -164,6 +167,7 @@ public class CityDbHelper {
 										.getColumnIndex("condition"))));
 			} while (cityCursor.moveToNext());
 		}
+		
 		cityCursor.close();
 		return ans;
 	}
@@ -183,6 +187,7 @@ public class CityDbHelper {
 		ArrayList<WeatherAPIItem> cur;
 		private String[] cityList;
 
+		@SuppressWarnings("unchecked")
 		@Override
 		protected void onPreExecute() {
 			ArrayList<String> cities = curAdapter.getAllCities();
@@ -226,6 +231,19 @@ public class CityDbHelper {
 				}
 				updateCityInDatabase(cityList[i], getCurrentTime(),
 						weatherHourly[i].get(0).condition, weatherHourly[i]);
+
+			}
+			Log.d("db_upd", "in update");
+			Log.d("db_upd", "active is " + MainActivity.active);
+			try {
+				MainActivity.updateCache();
+			} catch (Exception e) {
+				Log.d("db_upd", "catch update exception");
+			}
+			if (MainActivity.active) {
+				Log.d("db_upd", "UPDATE IN DATABASE");
+				MainActivity.updateCache();
+				Log.d("db_upd", "active is " + MainActivity.active);
 
 			}
 		}

@@ -47,7 +47,6 @@ public class SettingsActivity extends Activity {
 	private TabHost tabs;
 	private CityDbHelper mDbHelper;
 	private Button addCity, updSetOK, clear;
-	private LinearLayout citySettingsLayout = null;
 	private TimePicker timePicker;
 	private AutoCompleteTextView editText, addCityEditText;
 	private TreeSet<String> haveCity = new TreeSet<String>();
@@ -157,8 +156,7 @@ public class SettingsActivity extends Activity {
 
 	private void tuneCitySettings(View tmp) {
 		clear = (Button) tmp.findViewById(R.id.clearData);
-		citySettingsLayout = (LinearLayout) tmp
-				.findViewById(R.id.citySettingsLayout);
+		
 		addCity = (Button) tmp.findViewById(R.id.addCity);
 		addCityEditText = (AutoCompleteTextView) tmp
 				.findViewById(R.id.addCityEditText);

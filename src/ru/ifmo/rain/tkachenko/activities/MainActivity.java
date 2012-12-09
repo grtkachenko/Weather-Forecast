@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import ru.ifmo.rain.tkachenko.alarm.AlarmManagerBroadcastReceiver;
 import ru.ifmo.rain.tkachenko.helpers.Cities;
@@ -30,6 +32,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -53,12 +57,13 @@ import android.widget.Toast;
 public class MainActivity extends Activity implements OnClickListener {
 	public TextView city, temeratureNow, weatherNow, currentCityList,
 			whenUpdated;
+	public static boolean active = false;
 	public static MainActivity mainActivity;
 	public ImageView refresh, settings;
 	private boolean debugWithNoInternet = false;
 	public TableLayout table;
 	private RelativeLayout allWorkspace;
-	private CityDbHelper mDbHelper;
+	private static CityDbHelper mDbHelper;
 	public LinearLayout fourDaysLayout, todayLayout, allBottomLayout;
 	private WeatherAPIHelper weatherApiHelper = new WeatherAPIHelper();
 
@@ -73,13 +78,20 @@ public class MainActivity extends Activity implements OnClickListener {
 	private String[] cityList;
 
 	private volatile int currentCity = 0;
-	private HashMap<String, ArrayList<WeatherAPIItem>> cache = new HashMap<String, ArrayList<WeatherAPIItem>>();
-	private HashMap<String, String> updateCache = new HashMap<String, String>();
+	private static HashMap<String, ArrayList<WeatherAPIItem>> cache = new HashMap<String, ArrayList<WeatherAPIItem>>();
+	private static HashMap<String, String> updateCache = new HashMap<String, String>();
 	private boolean needDeleteDatabase = false;
 	public static AlarmManagerBroadcastReceiver alarm = new AlarmManagerBroadcastReceiver();;
 
 	@Override
+	protected void onDestroy() {
+		MainActivity.active = false;
+		super.onDestroy();
+	}
+
+	@Override
 	protected void onPause() {
+
 		// TODO Auto-generated method stub
 		SharedPreferences.Editor editor = getPreferences(MODE_PRIVATE).edit();
 		editor.putInt("currentCity", currentCity);
@@ -92,6 +104,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		MainActivity.active = true;
 		super.onCreate(savedInstanceState);
 		SharedPreferences prefs = getPreferences(MODE_PRIVATE);
 		if (prefs.contains("currentCity")) {
@@ -100,7 +113,7 @@ public class MainActivity extends Activity implements OnClickListener {
 			MainActivity.alarm.setUpdateTime(prefs.getInt("timeInterval", -1));
 		}
 		MainActivity.mainActivity = this;
-
+		Log.d("db_upd", "In mainActivity active is " + MainActivity.active);
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -235,8 +248,23 @@ public class MainActivity extends Activity implements OnClickListener {
 		intent.putExtra("data", data);
 		onActivityResult(1, 0, intent);
 		initViews();
+		Log.d("db_upd", "mDbHelper1" + MainActivity.mDbHelper);
 
 		alarm.setAlarm(this);
+	}
+
+	public static void updateCache() {
+		// Log.d("db_upd", "mDbHelper" + mDbHelper);
+		Log.d("db_upd", "mDbHelper2" + MainActivity.mDbHelper);
+		final ArrayList<CityDbItem> help = MainActivity.mDbHelper
+				.getAllCityItems();
+		for (int i = 0; i < help.size(); i++) {
+			if (help.get(i).time.length() != 0) {
+				cache.put(help.get(i).city, help.get(i).getItemList());
+				updateCache.put(help.get(i).city, help.get(i).time);
+			}
+		}
+
 	}
 
 	public int getCitySize(int val) {
@@ -370,13 +398,7 @@ public class MainActivity extends Activity implements OnClickListener {
 				HashMap<String, ArrayList<WeatherAPIItem>> tmpCache = new HashMap<String, ArrayList<WeatherAPIItem>>();
 				HashMap<String, String> tmpCacheUpd = new HashMap<String, String>();
 				cityList = extra.getStringArray("data");
-				for (int i = 0; i < cityList.length; i++) {
-					if (cache.containsKey(cityList[i])) {
-						tmpCache.put(cityList[i], cache.get(cityList[i]));
-						tmpCacheUpd.put(cityList[i],
-								updateCache.get(cityList[i]));
-					}
-				}
+				updateCache();
 				updateCache = tmpCacheUpd;
 				cache = tmpCache;
 
@@ -537,8 +559,10 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		}
 
+		@SuppressWarnings("deprecation")
 		@Override
 		protected Void doInBackground(Void... params) {
+			updateCache();
 			if (debugWithNoInternet) {
 				return null;
 			}
@@ -549,8 +573,8 @@ public class MainActivity extends Activity implements OnClickListener {
 				alertDialog.setMessage("Please check your connection");
 				alertDialog.setButton("OK",
 						new DialogInterface.OnClickListener() {
-							public void onClick(DialogInterface dialog,
-									int which) {
+							public void onClick(final DialogInterface dialog,
+									final int which) {
 								finish();
 							}
 						});
